@@ -1,24 +1,37 @@
-import React, { Fragment, FunctionComponent, JSXElementConstructor, useEffect, useRef, useState } from 'react'
+import React, {
+  ComponentProps,
+  Fragment,
+  FunctionComponent,
+  JSXElementConstructor,
+  useEffect,
+  useRef,
+  useState
+} from 'react'
 import { createPortal } from 'react-dom'
 import { v4 as uuid } from 'uuid'
 
-interface IComponentInstance {
+interface IComponent {
   key: string;
   node: HTMLElement;
   component: JSXElementConstructor<any>;
   props: any;
 }
 
+interface IComponentInstance<T> {
+  update: (props: T) => void;
+  remove: () => void;
+}
+
 const createSharedContext = (Root: JSXElementConstructor<any> = Fragment) => {
   // Make method accessible by both SharedContext and withSharedContext
-  let renderWithSharedContext: { (component: IComponentInstance): { update: (props: any) => void; remove: () => void; }; }
+  let renderWithSharedContext: { (component: IComponent): IComponentInstance<ComponentProps<typeof component.component>> }
 
-  const SharedContext: FunctionComponent<any> = rootProps => {
+  const SharedContext: FunctionComponent<ComponentProps<typeof Root>> = rootProps => {
     // List of components and their props to be rendered with react portal in their designated nodes
-    const [components, setComponents] = useState<{ [key: string]: IComponentInstance }>({})
+    const [components, setComponents] = useState<{ [key: string]: IComponent }>({})
 
     useEffect(() => {
-      renderWithSharedContext = (component: IComponentInstance) => {
+      renderWithSharedContext = (component: IComponent) => {
         // Add component to list
         setComponents(prevState => {
           prevState[component.key] = component
@@ -53,12 +66,15 @@ const createSharedContext = (Root: JSXElementConstructor<any> = Fragment) => {
     )
   }
 
-  const withSharedContext: ((component: JSXElementConstructor<any>) => FunctionComponent<any>) = component => {
+  const useSharedContext: ((component: JSXElementConstructor<any>) => FunctionComponent<any>) = component => {
     // Create as local variable instead of returning inline to fix TSLint
-    const WithSharedContext: FunctionComponent<any> = props => {
-      const key = useRef(uuid())														// Create unique key for this instance
-      const ref = useRef<HTMLDivElement>(null)	  // Hold reference to rendered hidden DOM node
-      const instance = useRef<any>()												// Instance is SharedContext
+    const UseSharedContext: FunctionComponent<ComponentProps<typeof component>> = props => {
+      // Create unique key for this instance
+      const key = useRef(uuid())
+      // Hold reference to rendered hidden DOM node
+      const ref = useRef<HTMLDivElement>(null)
+      // Instance is SharedContext
+      const instance = useRef<IComponentInstance<ComponentProps<typeof component>>>()
 
       useEffect(() => {
         if (instance.current) {
@@ -80,18 +96,19 @@ const createSharedContext = (Root: JSXElementConstructor<any> = Fragment) => {
           // Return callback to unmount component in SharedContext when this component is unmounted
           return instance.current.remove
         }
+        return
       }, [ref.current])
 
       // Hidden <div> component only used to get reference in dom
       return <div ref={ref} style={{ display: 'none' }}/>
     }
 
-    return WithSharedContext
+    return UseSharedContext
   }
 
   return {
     component: SharedContext,
-    use: withSharedContext
+    use: useSharedContext
   }
 }
 

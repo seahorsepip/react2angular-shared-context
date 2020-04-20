@@ -14,8 +14,8 @@ npm install --save react2angular-shared-context
 
 ```tsx
 import { react2angular } from 'react2angular';
-import React, {FunctionComponent} from 'react'
-import {ProviderAbc, ConsumerAbc} from './context/abc'
+import React, { FunctionComponent } from 'react'
+import { ProviderAbc, ConsumerAbc } from './context/abc'
 
 import createSharedContext from 'react2angular-shared-context'
 
