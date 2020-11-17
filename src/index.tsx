@@ -8,7 +8,7 @@ import React, {
   useState,
 } from 'react';
 import { createPortal } from 'react-dom';
-import { uuid } from '../common/helpers';
+import { v4 as uuid } from 'uuid';
 
 interface IComponent {
   key: string;
