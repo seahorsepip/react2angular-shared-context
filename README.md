@@ -51,4 +51,4 @@ angular
 
 ## License
 
-MIT © [https://github.com/seahorsepip](https://github.com/https://github.com/seahorsepip)
+MIT © [https://github.com/seahorsepip](https://github.com/seahorsepip)
