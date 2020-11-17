@@ -7,8 +7,8 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import {createPortal} from 'react-dom';
-import {v4 as uuid} from 'uuid';
+import { createPortal } from 'react-dom';
+import { uuid } from '../common/helpers';
 
 interface IComponent {
   key: string;
@@ -28,28 +28,36 @@ const createSharedContext = (Root: JSXElementConstructor<any> = Fragment) => {
 
   const SharedContext: FunctionComponent<ComponentProps<typeof Root>> = rootProps => {
     // List of components and their props to be rendered with react portal in their designated nodes
-    const [components, setComponents] = useState<{ [key: string]: IComponent }>({});
+    const [components, setComponents] = useState<Array<IComponent | undefined>>([]);
 
     useEffect(() => {
       renderWithSharedContext = (component: IComponent) => {
         // Add component to list
         setComponents(prevState => {
-          prevState[component.key] = component;
-          return {...prevState};
+          prevState.push(component);
+          return [...prevState];
         });
 
         // Return callbacks to update and remove component from list
         return {
           update: props => {
             setComponents(prevState => {
-              prevState[component.key].props = props;
-              return {...prevState};
-            })
+              const prevComponent = prevState.find((c) => c?.key === component.key);
+              if (!prevComponent) {
+                return prevState;
+              }
+              prevComponent.props = props;
+              return [...prevState];
+            });
           },
           remove: () => {
             setComponents(prevState => {
-              delete prevState[component.key];
-              return {...prevState};
+              const index = prevState.findIndex((c) => c?.key === component.key);
+              if (index === -1) {
+                return prevState;
+              }
+              prevState[index] = undefined;
+              return [...prevState];
             });
           },
         };
@@ -59,9 +67,13 @@ const createSharedContext = (Root: JSXElementConstructor<any> = Fragment) => {
     // Return list of react portals wrapped in one or multiple providers
     return (
       <Root {...rootProps}>
-        {Object
-          .values(components)
-          .map(({key, node, component: C, props}) => createPortal(<C key={key} {...props}/>, node))}
+        {components.map((component) => {
+          if (!component) {
+            return null;
+          }
+          const { key, node, component: C, props } = component;
+          return createPortal(<C key={key} {...props}/>, node);
+        })}
       </Root>
     );
   };
@@ -100,7 +112,7 @@ const createSharedContext = (Root: JSXElementConstructor<any> = Fragment) => {
       }, []);
 
       // Hidden <div> component only used to get reference in dom
-      return <div ref={ref} style={{display: 'none'}}/>;
+      return <div ref={ref} style={{ display: 'none' }}/>;
     };
 
     return UseSharedContext;
