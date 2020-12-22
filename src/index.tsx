@@ -1,19 +1,11 @@
-import React, {
-  ComponentProps,
-  Fragment,
-  FunctionComponent,
-  JSXElementConstructor,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
-import { createPortal } from 'react-dom';
-import { v4 as uuid } from 'uuid';
+import React, {ComponentProps, ComponentType, Fragment, FunctionComponent, useEffect, useRef, useState,} from 'react';
+import {createPortal} from 'react-dom';
+import {v4 as uuid} from 'uuid';
 
 interface IComponent {
   key: string;
   node: HTMLElement;
-  component: JSXElementConstructor<any>;
+  component: ComponentType<any>;
   props: any;
 }
 
@@ -22,18 +14,18 @@ interface IComponentInstance<T> {
   remove: () => void;
 }
 
-const createSharedContext = (Root: JSXElementConstructor<any> = Fragment) => {
+const createSharedContext = (Root: ComponentType<any> = Fragment) => {
   // Make method accessible by both SharedContext and withSharedContext
   let renderWithSharedContext: { (component: IComponent): IComponentInstance<ComponentProps<typeof component.component>> };
 
-  const SharedContext: FunctionComponent<ComponentProps<typeof Root>> = rootProps => {
+  const SharedContext: FunctionComponent<ComponentProps<typeof Root>> = (rootProps) => {
     // List of components and their props to be rendered with react portal in their designated nodes
     const [components, setComponents] = useState<Array<IComponent | undefined>>([]);
 
     useEffect(() => {
       renderWithSharedContext = (component: IComponent) => {
         // Add component to list
-        setComponents(prevState => {
+        setComponents((prevState) => {
           prevState.push(component);
           return [...prevState];
         });
@@ -41,7 +33,7 @@ const createSharedContext = (Root: JSXElementConstructor<any> = Fragment) => {
         // Return callbacks to update and remove component from list
         return {
           update: props => {
-            setComponents(prevState => {
+            setComponents((prevState) => {
               const prevComponent = prevState.find((c) => c?.key === component.key);
               if (!prevComponent) {
                 return prevState;
@@ -51,7 +43,7 @@ const createSharedContext = (Root: JSXElementConstructor<any> = Fragment) => {
             });
           },
           remove: () => {
-            setComponents(prevState => {
+            setComponents((prevState) => {
               const index = prevState.findIndex((c) => c?.key === component.key);
               if (index === -1) {
                 return prevState;
@@ -71,14 +63,14 @@ const createSharedContext = (Root: JSXElementConstructor<any> = Fragment) => {
           if (!component) {
             return null;
           }
-          const { key, node, component: C, props } = component;
+          const {key, node, component: C, props} = component;
           return createPortal(<C key={key} {...props}/>, node);
         })}
       </Root>
     );
   };
 
-  const useSharedContext: ((component: JSXElementConstructor<any>) => FunctionComponent<any>) = component => {
+  const useSharedContext: ((component: ComponentType<any>) => FunctionComponent<any>) = component => {
     // Create as local variable instead of returning inline to fix TSLint
     const UseSharedContext: FunctionComponent<ComponentProps<typeof component>> = props => {
       // Create unique key for this instance
@@ -112,7 +104,7 @@ const createSharedContext = (Root: JSXElementConstructor<any> = Fragment) => {
       }, []);
 
       // Hidden <div> component only used to get reference in dom
-      return <div ref={ref} style={{ display: 'none' }}/>;
+      return <div ref={ref} style={{display: 'none'}}/>;
     };
 
     return UseSharedContext;
