@@ -1,4 +1,4 @@
-import React, {ComponentProps, ComponentType, Fragment, FunctionComponent, useEffect, useRef, useState,} from 'react';
+import React, {ComponentProps, ComponentType, Fragment, FunctionComponent, useEffect, useLayoutEffect, useRef, useState,} from 'react';
 import {createPortal} from 'react-dom';
 import {v4 as uuid} from 'uuid';
 
@@ -80,14 +80,14 @@ const createSharedContext = (Root: ComponentType<any> = Fragment) => {
       // Instance is SharedContext
       const instance = useRef<IComponentInstance<ComponentProps<typeof component>>>();
 
-      useEffect(() => {
+      useLayoutEffect(() => {
         if (instance.current) {
           // Pass prop updates to instance in SharedContext
           instance.current.update(props);
         }
       }, [props]);
 
-      useEffect(() => {
+      useLayoutEffect(() => {
         if (ref.current && ref.current.parentElement) {
           // Create instance in SharedContext
           instance.current = renderWithSharedContext({
