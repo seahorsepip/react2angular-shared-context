@@ -1,4 +1,4 @@
-import React, {ComponentProps, ComponentType, Fragment, FunctionComponent, useEffect, useRef, useState,} from 'react';
+import React, {ComponentProps, ComponentType, Fragment, FunctionComponent, useEffect, useLayoutEffect, useRef, useState} from 'react';
 import {createPortal} from 'react-dom';
 import {v4 as uuid} from 'uuid';
 
@@ -14,7 +14,7 @@ interface IComponentInstance<T> {
   remove: () => void;
 }
 
-const createSharedContext = (Root: ComponentType<any> = Fragment) => {
+const createSharedContext = (Root: ComponentType<any> = Fragment, isAsync = true) => {
   // Make method accessible by both SharedContext and withSharedContext
   let renderWithSharedContext: { (component: IComponent): IComponentInstance<ComponentProps<typeof component.component>> };
 
@@ -80,14 +80,14 @@ const createSharedContext = (Root: ComponentType<any> = Fragment) => {
       // Instance is SharedContext
       const instance = useRef<IComponentInstance<ComponentProps<typeof component>>>();
 
-      useEffect(() => {
+      (isAsync ? useEffect : useLayoutEffect)(() => {
         if (instance.current) {
           // Pass prop updates to instance in SharedContext
           instance.current.update(props);
         }
       }, [props]);
 
-      useEffect(() => {
+      (isAsync ? useEffect : useLayoutEffect)(() => {
         if (ref.current && ref.current.parentElement) {
           // Create instance in SharedContext
           instance.current = renderWithSharedContext({
